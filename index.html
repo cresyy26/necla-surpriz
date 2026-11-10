@@ -255,6 +255,24 @@
       animation: float 2.4s ease-in-out infinite;
     }
 
+    .music-retry {
+      display: inline-block;
+      margin-top: 18px;
+      padding: 9px 18px;
+      border: 1px solid rgb(215 189 131 / 45%);
+      border-radius: 14px;
+      background: rgb(215 189 131 / 8%);
+      color: var(--gold-soft);
+      font: inherit;
+      font-size: 17px;
+      touch-action: manipulation;
+      cursor: pointer;
+    }
+
+    .music-retry[hidden] {
+      display: none;
+    }
+
     .canvas {
       position: fixed;
       z-index: 3;
@@ -322,6 +340,9 @@
 </head>
 <body>
   <canvas class="canvas" id="confetti" aria-hidden="true"></canvas>
+  <audio id="ourSong" preload="auto" playsinline aria-hidden="true">
+    <source src="music.mp3" type="audio/mpeg">
+  </audio>
   <main class="page">
     <section class="card" aria-live="polite">
       <div class="heart-mark" aria-hidden="true">♡</div>
@@ -343,8 +364,9 @@
 
       <div class="success" id="success" hidden>
         <div class="ornament" aria-hidden="true">✦</div>
-        <h2><span class="success-message" lang="ar">أسعدتني! كنت أعلم أنكِ ستوافقين يا حبيبتي! 🤍</span></h2>
+        <h2><span class="success-message" lang="ar">سنبقى معاً مدى الحياة يا حبيبتي، أحبكِ كثيراً. 🤍</span></h2>
         <p class="celebration" aria-label="فرحة واحتفال">💍✨🥂🤍</p>
+        <button class="music-retry" id="musicRetry" type="button" hidden>تشغيل موسيقانا</button>
       </div>
     </section>
   </main>
@@ -355,6 +377,8 @@
       const success = document.getElementById("success");
       const yesButton = document.getElementById("yesButton");
       const noButton = document.getElementById("noButton");
+      const ourSong = document.getElementById("ourSong");
+      const musicRetry = document.getElementById("musicRetry");
       const canvas = document.getElementById("confetti");
       const context = canvas.getContext("2d");
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -425,10 +449,34 @@
         context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
       }
 
+      function seekToSongMiddle() {
+        if (Number.isFinite(ourSong.duration) && ourSong.duration > 0) {
+          ourSong.currentTime = ourSong.duration / 2;
+        }
+      }
+
+      ourSong.addEventListener("loadedmetadata", seekToSongMiddle);
+      ourSong.addEventListener("error", () => {
+        musicRetry.hidden = false;
+      });
+
+      function playOurSong() {
+        const playback = ourSong.play();
+        seekToSongMiddle();
+        if (playback) {
+          playback.then(() => {
+            musicRetry.hidden = true;
+          }).catch(() => {
+            musicRetry.hidden = false;
+          });
+        }
+      }
+
       function celebrate() {
         proposal.hidden = true;
         success.hidden = false;
         noButton.hidden = true;
+        playOurSong();
         if (reducedMotion) return;
 
         const colors = ["#f5d2ec", "#c5b3ff", "#9ee6e3", "#fff1bd", "#ffffff"];
@@ -475,6 +523,7 @@
       resizeCanvas();
       window.addEventListener("resize", resizeCanvas);
       yesButton.addEventListener("click", celebrate, { once: true });
+      musicRetry.addEventListener("click", playOurSong);
     })();
   </script>
 </body>
